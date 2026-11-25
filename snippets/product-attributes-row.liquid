@@ -1,0 +1,56 @@
+{%- doc -%}
+  Renders one row of the product attributes block, either as a collapsible
+  accordion row or as a static heading with content below.
+
+  @param {string} heading - The row heading
+  @param {string} content - The pre-rendered row content (HTML)
+  @param {string} layout - 'accordion' or 'list'
+  @param {boolean} [open] - Whether the accordion row is open by default
+  @param {string} [heading_preset] - Type preset class for the heading in the list layout
+
+  @example
+  {% render 'product-attributes-row',
+    heading: 'Material',
+    content: '<p>Cotton</p>',
+    layout: 'accordion',
+    open: true
+  %}
+{%- enddoc -%}
+
+{%- if layout == 'accordion' -%}
+  {%- capture row_children -%}
+    <details
+      class="details"
+      {% if open %}
+        open
+      {% endif %}
+    >
+      <summary class="details__header">
+        {{ heading | escape }}
+        <span class="svg-wrapper icon-caret icon-animated">
+          {{- 'icon-caret.svg' | inline_asset_content -}}
+        </span>
+        <span class="svg-wrapper icon-plus">
+          {{- 'icon-plus.svg' | inline_asset_content -}}
+        </span>
+      </summary>
+
+      <div class="details-content product-attributes__content rte">
+        {{ content }}
+      </div>
+    </details>
+  {%- endcapture -%}
+
+  {% render 'accordion-custom-component',
+    children: row_children,
+    open_by_default_on_desktop: open,
+    open_by_default_on_mobile: open
+  %}
+{%- else -%}
+  <div class="product-attributes__item">
+    <h2 class="product-attributes__heading {{ heading_preset }}">{{ heading | escape }}</h2>
+    <div class="product-attributes__content rte">
+      {{ content }}
+    </div>
+  </div>
+{%- endif -%}

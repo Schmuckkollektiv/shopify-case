@@ -159,7 +159,8 @@
     "product_sku": "SKU",
     "layered_slideshow": "Überlagerte Slideshow",
     "cart_drawer": "Warenkorbeinschub",
-    "disclosures": "Pflichtangaben"
+    "disclosures": "Pflichtangaben",
+    "product_attributes": "Zusatzinformationen"
   },
   "settings": {
     "autoplay": "Autoplay",
@@ -510,6 +511,20 @@
       "description_preset": "Beschreibung",
       "input_preset": "Eingabe",
       "checkbox_preset": "Bezeichnung des Kontrollkästchens"
+    },
+    "product_attributes": {
+      "source_info": "Zeigt die Produkt-Metafelder Material (inkl. der am Material hinterlegten Pflegehinweise), Herkunft und Highlights an. Leere Felder werden automatisch ausgeblendet.",
+      "layout_list": "Liste",
+      "highlights_position": "Darstellung der Highlights",
+      "highlights_position_top": "Immer sichtbar oben",
+      "highlights_position_row": "Als eigene Zeile",
+      "open_first_row": "Erste Zeile standardmäßig öffnen",
+      "show": "Anzeigen",
+      "heading_info": "Leer lassen, um die Standardüberschrift in der Sprache des Shops zu verwenden.",
+      "highlights": "Highlights",
+      "material": "Material",
+      "care": "Pflegehinweise",
+      "origin": "Herkunft"
     },
     "blog": "Blog",
     "post_count": "Anzahl der Beiträge",

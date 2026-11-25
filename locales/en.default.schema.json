@@ -419,6 +419,7 @@
     "video_section": "Video",
     "view_all_button": "View all",
     "disclosures": "Disclosures",
+    "product_attributes": "Additional information",
     "pills": "Pills",
     "comparison_slider": "Comparison slider"
   },
@@ -1052,6 +1053,20 @@
       "description_preset": "Description",
       "input_preset": "Input",
       "checkbox_preset": "Checkbox label"
+    },
+    "product_attributes": {
+      "source_info": "Shows the product metafields Material (with the care instructions stored on the material), Origin and Highlights. Empty fields are hidden automatically.",
+      "layout_list": "List",
+      "highlights_position": "Highlights display",
+      "highlights_position_top": "Always visible at the top",
+      "highlights_position_row": "As a separate row",
+      "open_first_row": "Open first row by default",
+      "show": "Show",
+      "heading_info": "Leave empty to use the default heading in the store's language.",
+      "highlights": "Highlights",
+      "material": "Material",
+      "care": "Care instructions",
+      "origin": "Origin"
     },
     // Checkbox setting to enable quick add to cart from product cards
     "quick_add": "Quick add",

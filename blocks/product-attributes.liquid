@@ -1,0 +1,485 @@
+{%- liquid
+  assign block_settings = block.settings
+  assign layout = block_settings.layout
+
+  # Data model (all field access lives here):
+  # - custom.material   -> reference to a shared `material` metaobject entry
+  #                        (name + pflegehinweise), so care instructions are
+  #                        maintained once per material, not per product
+  # - custom.herkunft   -> product specific, single line text
+  # - custom.highlights -> product specific, list of single line text
+  assign product_metafields = closest.product.metafields.custom
+  assign material_entry = product_metafields.material.value
+  assign material = material_entry.name.value | strip
+  assign care = material_entry.pflegehinweise.value | strip
+  assign origin = product_metafields.herkunft.value | strip
+  assign highlights = product_metafields.highlights.value
+  assign highlights_text = highlights | join: '' | strip
+
+  assign show_highlights = false
+  if block_settings.show_highlights and highlights_text != blank
+    assign show_highlights = true
+  endif
+
+  assign show_material = false
+  if block_settings.show_material and material != blank
+    assign show_material = true
+  endif
+
+  assign show_care = false
+  if block_settings.show_care and care != blank
+    assign show_care = true
+  endif
+
+  assign show_origin = false
+  if block_settings.show_origin and origin != blank
+    assign show_origin = true
+  endif
+
+  assign highlights_on_top = false
+  if show_highlights and block_settings.highlights_position == 'top'
+    assign highlights_on_top = true
+  endif
+
+  assign has_rows = false
+  if show_material or show_care or show_origin
+    assign has_rows = true
+  elsif show_highlights and highlights_on_top == false
+    assign has_rows = true
+  endif
+
+  # Empty heading settings fall back to the storefront translation, so
+  # multi-language stores get localized headings without extra setup.
+  assign heading_highlights = block_settings.heading_highlights
+  if heading_highlights == blank
+    assign heading_highlights = 'products.product.attributes.highlights' | t
+  endif
+
+  assign heading_material = block_settings.heading_material
+  if heading_material == blank
+    assign heading_material = 'products.product.attributes.material' | t
+  endif
+
+  assign heading_care = block_settings.heading_care
+  if heading_care == blank
+    assign heading_care = 'products.product.attributes.care' | t
+  endif
+
+  assign heading_origin = block_settings.heading_origin
+  if heading_origin == blank
+    assign heading_origin = 'products.product.attributes.origin' | t
+  endif
+
+  # Only the first visible row may be opened by default.
+  assign open_next_row = false
+  if layout == 'accordion' and block_settings.open_first_row
+    assign open_next_row = true
+  endif
+-%}
+
+<div
+  class="product-attributes-block"
+  {{ block.shopify_attributes }}
+>
+  {%- if highlights_on_top or has_rows -%}
+    {%- capture highlights_list -%}
+      <ul
+        class="product-attributes__highlights"
+        role="list"
+        {% if highlights_on_top %}
+          aria-label="{{ heading_highlights | escape }}"
+        {% endif %}
+      >
+        {%- for highlight in highlights -%}
+          {%- assign highlight_text = highlight | strip -%}
+          {%- if highlight_text != blank -%}
+            <li class="product-attributes__highlight">
+              <span class="svg-wrapper" aria-hidden="true">
+                {{- 'icon-checkmark.svg' | inline_asset_content -}}
+              </span>
+              <span>{{ highlight_text | escape }}</span>
+            </li>
+          {%- endif -%}
+        {%- endfor -%}
+      </ul>
+    {%- endcapture -%}
+
+    <div
+      class="product-attributes product-attributes--{{ layout }} spacing-style"
+      style="{% render 'spacing-style', settings: block_settings %}"
+    >
+      {%- if highlights_on_top -%}
+        {{ highlights_list }}
+      {%- endif -%}
+
+      {%- if has_rows -%}
+        <div
+          class="product-attributes__rows{% if layout == 'accordion' %} accordion accordion--{{ block_settings.icon }}{% if block_settings.dividers %} accordion--dividers{% endif %}{% endif %}"
+          style="
+            --summary-font-family: var(--font-{{ block_settings.heading_preset }}--family);
+            --summary-font-style: var(--font-{{ block_settings.heading_preset }}--style);
+            --summary-font-weight: var(--font-{{ block_settings.heading_preset }}--weight);
+            --summary-font-size: var(--font-{{ block_settings.heading_preset }}--size);
+            --summary-font-line-height: var(--font-{{ block_settings.heading_preset }}--line-height);
+            --summary-font-case: var(--font-{{ block_settings.heading_preset }}--case);
+          "
+        >
+          {%- if show_highlights and highlights_on_top == false -%}
+            {% render 'product-attributes-row',
+              layout: layout,
+              heading: heading_highlights,
+              content: highlights_list,
+              open: open_next_row,
+              heading_preset: block_settings.heading_preset
+            %}
+            {%- assign open_next_row = false -%}
+          {%- endif -%}
+
+          {%- if show_material -%}
+            {%- capture row_content -%}<p>{{ material | escape }}</p>{%- endcapture -%}
+            {% render 'product-attributes-row',
+              layout: layout,
+              heading: heading_material,
+              content: row_content,
+              open: open_next_row,
+              heading_preset: block_settings.heading_preset
+            %}
+            {%- assign open_next_row = false -%}
+          {%- endif -%}
+
+          {%- if show_care -%}
+            {%- capture row_content -%}<p>{{ care | escape | newline_to_br }}</p>{%- endcapture -%}
+            {% render 'product-attributes-row',
+              layout: layout,
+              heading: heading_care,
+              content: row_content,
+              open: open_next_row,
+              heading_preset: block_settings.heading_preset
+            %}
+            {%- assign open_next_row = false -%}
+          {%- endif -%}
+
+          {%- if show_origin -%}
+            {%- capture row_content -%}<p>{{ origin | escape }}</p>{%- endcapture -%}
+            {% render 'product-attributes-row',
+              layout: layout,
+              heading: heading_origin,
+              content: row_content,
+              open: open_next_row,
+              heading_preset: block_settings.heading_preset
+            %}
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+    </div>
+  {%- elsif request.design_mode -%}
+    <p class="product-attributes__editor-notice">
+      {{ 'products.product.attributes.editor_empty' | t }}
+    </p>
+  {%- else -%}
+    <div
+      hidden
+      shopify-block-empty
+    ></div>
+  {%- endif -%}
+</div>
+
+{% render 'accordion-styles' %}
+
+{% stylesheet %}
+  .product-attributes-block {
+    width: 100%;
+  }
+
+  .product-attributes-block:has(> [shopify-block-empty]) {
+    display: none;
+  }
+
+  .product-attributes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-md);
+  }
+
+  .product-attributes__content p {
+    margin: 0;
+  }
+
+  .product-attributes__highlights {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-xs);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .product-attributes__highlight {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--gap-sm);
+  }
+
+  .product-attributes__highlight .svg-wrapper {
+    flex-shrink: 0;
+    width: var(--icon-size-xs);
+    height: 1lh;
+  }
+
+  .product-attributes--list .product-attributes__rows {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-md);
+  }
+
+  .product-attributes__heading {
+    margin-block: 0 var(--margin-xs);
+  }
+
+  .product-attributes__editor-notice {
+    margin: 0;
+    padding: var(--padding-sm);
+    border: var(--style-border-width) dashed var(--color-border);
+    font-size: min(0.85em, var(--font-paragraph--size));
+    color: rgb(var(--color-foreground-rgb) / var(--opacity-subdued-text));
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.product_attributes",
+  "tag": null,
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:settings.product_attributes.source_info"
+    },
+    {
+      "type": "header",
+      "content": "t:content.layout"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "t:settings.layout",
+      "options": [
+        {
+          "value": "accordion",
+          "label": "t:settings.accordion"
+        },
+        {
+          "value": "list",
+          "label": "t:settings.product_attributes.layout_list"
+        }
+      ],
+      "default": "accordion"
+    },
+    {
+      "type": "select",
+      "id": "highlights_position",
+      "label": "t:settings.product_attributes.highlights_position",
+      "options": [
+        {
+          "value": "top",
+          "label": "t:settings.product_attributes.highlights_position_top"
+        },
+        {
+          "value": "row",
+          "label": "t:settings.product_attributes.highlights_position_row"
+        }
+      ],
+      "default": "top"
+    },
+    {
+      "type": "checkbox",
+      "id": "open_first_row",
+      "label": "t:settings.product_attributes.open_first_row",
+      "default": false,
+      "visible_if": "{{ block.settings.layout == 'accordion' }}"
+    },
+    {
+      "type": "select",
+      "id": "icon",
+      "label": "t:settings.icon",
+      "options": [
+        {
+          "value": "caret",
+          "label": "t:options.caret"
+        },
+        {
+          "value": "plus",
+          "label": "t:options.plus"
+        }
+      ],
+      "default": "caret",
+      "visible_if": "{{ block.settings.layout == 'accordion' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "dividers",
+      "label": "t:settings.dividers",
+      "default": true,
+      "visible_if": "{{ block.settings.layout == 'accordion' }}"
+    },
+    {
+      "type": "select",
+      "id": "heading_preset",
+      "label": "t:settings.heading_preset",
+      "options": [
+        {
+          "value": "paragraph",
+          "label": "t:options.paragraph"
+        },
+        {
+          "value": "h1",
+          "label": "t:options.h1"
+        },
+        {
+          "value": "h2",
+          "label": "t:options.h2"
+        },
+        {
+          "value": "h3",
+          "label": "t:options.h3"
+        },
+        {
+          "value": "h4",
+          "label": "t:options.h4"
+        },
+        {
+          "value": "h5",
+          "label": "t:options.h5"
+        },
+        {
+          "value": "h6",
+          "label": "t:options.h6"
+        }
+      ],
+      "default": "h6",
+      "info": "t:info.edit_presets_in_theme_settings"
+    },
+    {
+      "type": "header",
+      "content": "t:settings.product_attributes.highlights"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_highlights",
+      "label": "t:settings.product_attributes.show",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "heading_highlights",
+      "label": "t:settings.heading",
+      "placeholder": "t:settings.product_attributes.highlights",
+      "info": "t:settings.product_attributes.heading_info",
+      "visible_if": "{{ block.settings.show_highlights }}"
+    },
+    {
+      "type": "header",
+      "content": "t:settings.product_attributes.material"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_material",
+      "label": "t:settings.product_attributes.show",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "heading_material",
+      "label": "t:settings.heading",
+      "placeholder": "t:settings.product_attributes.material",
+      "info": "t:settings.product_attributes.heading_info",
+      "visible_if": "{{ block.settings.show_material }}"
+    },
+    {
+      "type": "header",
+      "content": "t:settings.product_attributes.care"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_care",
+      "label": "t:settings.product_attributes.show",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "heading_care",
+      "label": "t:settings.heading",
+      "placeholder": "t:settings.product_attributes.care",
+      "info": "t:settings.product_attributes.heading_info",
+      "visible_if": "{{ block.settings.show_care }}"
+    },
+    {
+      "type": "header",
+      "content": "t:settings.product_attributes.origin"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_origin",
+      "label": "t:settings.product_attributes.show",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "heading_origin",
+      "label": "t:settings.heading",
+      "placeholder": "t:settings.product_attributes.origin",
+      "info": "t:settings.product_attributes.heading_info",
+      "visible_if": "{{ block.settings.show_origin }}"
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start",
+      "label": "t:settings.left",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end",
+      "label": "t:settings.right",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:names.product_attributes",
+      "category": "t:categories.product"
+    }
+  ]
+}
+{% endschema %}
