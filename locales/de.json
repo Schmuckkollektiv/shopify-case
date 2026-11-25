@@ -345,7 +345,14 @@
       "quantity_maximum": "Maximal {{ maximum }}",
       "in_cart": "im Warenkorb",
       "default_title": "Standardtitel",
-      "sticky_add_to_cart": "Leiste „Schnell in den Warenkorb“"
+      "sticky_add_to_cart": "Leiste „Schnell in den Warenkorb“",
+      "attributes": {
+        "highlights": "Highlights",
+        "material": "Material",
+        "care": "Pflegehinweise",
+        "origin": "Herkunft",
+        "editor_empty": "Für dieses Produkt sind keine Zusatzinformationen gepflegt. Der Block wird im Shop ausgeblendet."
+      }
     }
   },
   "fields": {
