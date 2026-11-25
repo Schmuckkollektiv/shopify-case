@@ -141,6 +141,8 @@
     "quantity": "Anzahl",
     "product_total": "Produkt insgesamt",
     "cart_estimated_total": "Geschätzter Gesamtbetrag",
+    "free_shipping_remaining_html": "Noch <strong>{{ amount }}</strong> bis zum kostenlosen Versand",
+    "free_shipping_reached": "Deine Bestellung wird kostenlos versendet",
     "seller_note": "Besondere Hinweise",
     "cart_subtotal": "Zwischensumme",
     "discounts": "Rabatte",

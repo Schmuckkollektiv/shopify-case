@@ -1,0 +1,130 @@
+{%- doc -%}
+  Renders a message and progress bar showing how far the cart is from the free shipping threshold
+  configured in the theme settings (Cart > Free shipping progress).
+
+  The progress is based on `cart.total_price`, which already includes line- and cart-level discounts
+  (including discount codes). The snippet is rendered server side only: the cart drawer section is
+  re-rendered via the Section Rendering API on every cart change (add, quantity, remove, discount code),
+  so the output always matches the current cart without extra JavaScript.
+
+  Nothing is rendered when the feature is disabled, no threshold is set, the cart is empty, the cart
+  doesn't require shipping, or the cart currency differs from the store currency (the threshold is
+  entered in the store currency and Liquid can't convert it reliably).
+
+  @example
+  {% render 'free-shipping-progress' %}
+{%- enddoc -%}
+
+{%- liquid
+  assign threshold = settings.free_shipping_threshold | times: 100 | round
+
+  assign is_visible = false
+  if settings.show_free_shipping_progress and threshold > 0 and cart.item_count > 0 and cart.requires_shipping
+    if cart.currency.iso_code == shop.currency
+      assign is_visible = true
+    endif
+  endif
+-%}
+
+{%- if is_visible -%}
+  {%- liquid
+    assign remaining = threshold | minus: cart.total_price
+
+    if remaining > 0
+      assign is_reached = false
+      assign progress = cart.total_price | times: 100 | divided_by: threshold
+    else
+      assign is_reached = true
+      assign progress = 100
+    endif
+
+    if settings.currency_code_enabled_cart_total
+      assign remaining_amount = remaining | money_with_currency
+    else
+      assign remaining_amount = remaining | money
+    endif
+  -%}
+
+  <div
+    class="free-shipping-progress{% if is_reached %} free-shipping-progress--reached{% endif %}"
+    style="--free-shipping-progress: {{ progress | divided_by: 100.0 }};"
+  >
+    <p
+      class="free-shipping-progress__message"
+      role="status"
+    >
+      {%- if is_reached -%}
+        <span class="free-shipping-progress__icon svg-wrapper">
+          {{- 'icon-checkmark.svg' | inline_asset_content -}}
+        </span>
+        <span>{{ 'content.free_shipping_reached' | t }}</span>
+      {%- else -%}
+        <span>{{ 'content.free_shipping_remaining_html' | t: amount: remaining_amount }}</span>
+      {%- endif -%}
+    </p>
+
+    <div
+      class="free-shipping-progress__bar"
+      aria-hidden="true"
+    >
+      <span class="free-shipping-progress__fill"></span>
+    </div>
+  </div>
+{%- endif -%}
+
+{% stylesheet %}
+  .free-shipping-progress {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-xs);
+    flex-shrink: 0;
+    padding-inline: var(--cart-drawer-padding, 0);
+    padding-block-end: var(--padding-xl);
+    color: var(--color-foreground);
+  }
+
+  .free-shipping-progress__message {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-2xs);
+    margin: 0;
+    font-size: var(--font-size--sm);
+    line-height: var(--line-height--body-normal, 1.4);
+  }
+
+  .free-shipping-progress__message strong,
+  .free-shipping-progress--reached .free-shipping-progress__message {
+    font-weight: var(--font-weight-bold, 700);
+  }
+
+  .free-shipping-progress__icon {
+    flex-shrink: 0;
+    width: var(--icon-size-sm, 1.25rem);
+    height: var(--icon-size-sm, 1.25rem);
+  }
+
+  .free-shipping-progress__bar {
+    height: 0.375rem;
+    overflow: hidden;
+    border-radius: var(--style-border-radius-sm);
+    background-color: rgb(var(--color-foreground-rgb) / var(--opacity-10-25));
+  }
+
+  .free-shipping-progress__fill {
+    display: block;
+    height: 100%;
+    background-color: var(--color-foreground);
+    transform: scaleX(var(--free-shipping-progress, 0));
+    transform-origin: left center;
+  }
+
+  [dir='rtl'] .free-shipping-progress__fill {
+    transform-origin: right center;
+  }
+
+  @media screen and (prefers-reduced-motion: no-preference) {
+    .free-shipping-progress__fill {
+      transition: transform var(--animation-speed-slow) var(--animation-easing);
+    }
+  }
+{% endstylesheet %}
