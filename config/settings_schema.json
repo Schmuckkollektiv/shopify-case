@@ -1570,6 +1570,25 @@
       },
       {
         "type": "header",
+        "content": "t:content.free_shipping_progress"
+      },
+      {
+        "type": "checkbox",
+        "id": "show_free_shipping_progress",
+        "label": "t:settings.show_free_shipping_progress",
+        "info": "t:info.show_free_shipping_progress",
+        "default": false
+      },
+      {
+        "type": "number",
+        "id": "free_shipping_threshold",
+        "label": "t:settings.free_shipping_threshold",
+        "info": "t:info.free_shipping_threshold",
+        "default": 50,
+        "visible_if": "{{ settings.show_free_shipping_progress == true }}"
+      },
+      {
+        "type": "header",
         "content": "t:content.product_media"
       },
       {
